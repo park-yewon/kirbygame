@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>커비 게임</title>
+    <style>
+        body { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0;
+            font-family: 'Quicksand', sans-serif;
+            overflow: hidden;
+        }
+
+        /* 게임 시작 전 표지 화면 */
+        #cover {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            background-image: url('https://e7.pngegg.com/pngimages/351/900/png-clipart-kirby-the-amazing-mirror-kirby-mass-attack-kirby-air-ride-desktop-kirby-text-nintendo.png');
+            background-size: cover;
+            background-position: center center;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            color: white;
+        }
+
+        #cover h1 {
+            font-size: 50px;
+            font-weight: bold;
+            text-shadow: 3px 3px 10px rgba(0, 0, 0, 0.7);
+        }
+
+        #start-button {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 20px;
+            background-color: #FF69B4;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s ease;
+        }
+
+        #start-button:hover {
+            background-color: #ff4081;
+        }
+
+        /* 플레이어 이름 입력 필드 */
+        #name-input {
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 18px;
+            width: 300px;
+            text-align: center;
+            border-radius: 5px;
+            border: none;
+        }
+
+        /* 게임 화면 */
+        #game { 
+            position: relative; 
+            width: 600px; 
+            height: 300px; 
+            background-image: url('https://search.pstatic.net/sunny/?src=https%3A%2F%2Fi3.ruliweb.com%2Fimg%2F20%2F05%2F16%2F17218f6acd7253f.jpg&type=sc960_832');
+            background-size: cover; 
+            background-position: center; 
+            overflow: hidden; 
+            display: none; /* 게임 시작 전에는 숨김 */
+        }
+
+        #kirby { 
+            position: absolute; 
+            bottom: 0; 
+            width: 40px; 
+            height: 40px; 
+            background: url('https://i.namu.wiki/i/wXGU6DZbHowc6IB0GYPJpcmdDkLO3TW3MHzjg63jcTJvIzaBKhYqR0l9toBMHTv2OSU4eFKfPOlfrSQpymDJlA.webp') no-repeat center center;
+            background-size: cover;
+        }
+
+        /* 플레이어 이름 */
+        #player-name {
+            position: absolute;
+            bottom: 40px; /* 커비의 머리 바로 위에 위치 */
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            z-index: 5; /* 다른 요소들 위에 표시되도록 설정 */
+        }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 30px;
+            font-weight: bold;
+            color: #FF69B4;
+            font-family: 'Quicksand', sans-serif;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.7);
+            -webkit-text-stroke: 2px white;
+            animation: pop 1s infinite alternate;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.2); opacity: 0.9; }
+        }
+
+        /* 별 애니메이션 */
+        .flying-star {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: url('https://emojigraph.org/media/mozilla/star_2b50.png') no-repeat center center;
+            background-size: contain;
+            opacity: 0;
+            animation: flyStar 10s linear infinite;
+        }
+
+        @keyframes flyStar {
+            0% {
+                transform: translateX(0) translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateX(calc(100vw + 100px)) translateY(calc(100vh * -1));
+                opacity: 0;
+            }
+        }
+
+        /* 별 */
+        .star { 
+            position: absolute; 
+            bottom: 0; 
+            width: 40px; 
+            height: 40px; 
+            background: url('https://i.namu.wiki/i/X0RwQdtgCUX9Em8t3Rndt09Ak5JYYKbsjS9i3QRtDFJKZ14ZuTQts4abCnroe2Qa1oIgdPZmUOgL32lbgJWkeQ.webp') no-repeat center center; 
+            background-size: cover;
+        }
+        
+    /* 배경 화면이 고정되도록 수정 */
+    #background-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background-image: url('https://i.pinimg.com/736x/82/8f/e6/828fe6804bbbbf2a701ff235d4ed41b2.jpg'); /* 원하는 이미지 URL로 변경 */
+        background-size: cover;
+        background-position: center;
+    }
+
+    @keyframes changeBackground {
+        0% { background-image: url('https://i.pinimg.com/736x/b1/1c/ee/b11ceef6615558a5665ee445f0ed1088.jpg'); }
+        25% { background-image: url('https://i.pinimg.com/736x/03/c0/9c/03c09cc519688f7929f981d7f0a3f1d0.jpg'); }
+        50% { background-image: url('https://i.pinimg.com/736x/82/8f/e6/828fe6804bbbbf2a701ff235d4ed41b2.jpg'); }
+        75% { background-image: url('https://i.pinimg.com/736x/47/46/4b/47464bafd3943fe37514c4b91f41b56f.jpg'); }
+        100% { background-image: url('https://i.pinimg.com/736x/70/bc/10/70bc1047411954785c1262f1da4fc8cc.jpg'); }
+        animation-timing-function: ease-in-out;
+    }
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 게임 시작 전 표지 -->
+    <div id="cover">
+        <h1>커비 게임</h1>
+        <input type="text" id="name-input" placeholder="플레이어 이름 입력(영어 사용 권장)">
+        <button id="start-button">게임 시작</button>
+    </div>
+
+    <!-- 게임 화면 -->
+    <div id="game">
+        <div id="kirby">
+            <div id="player-name"></div> <!-- 플레이어 이름이 커비의 자식으로 포함됨 -->
+        </div>
+        <div id="score">점수: 0</div>
+    </div>
+
+    <!-- 배경 이미지가 순차적으로 변경되는 영역 -->
+    <div id="background-container"></div>
+
+    <script>
+        const kirby = document.getElementById('kirby');
+        const game = document.getElementById('game');
+        const scoreDisplay = document.getElementById('score');
+        const cover = document.getElementById('cover');
+        const startButton = document.getElementById('start-button');
+        const nameInput = document.getElementById('name-input');
+        const playerNameDisplay = document.getElementById('player-name');
+        let isJumping = false;
+        let score = 0;
+        let starIntervalTime = 1500;
+        let stars = [];
+        let playerName = '';
+
+        // 게임 시작 버튼 클릭 시
+        startButton.addEventListener('click', function() {
+            playerName = nameInput.value.trim() || '플레이어';
+            playerNameDisplay.textContent = playerName; // 플레이어 이름을 게임 화면에 표시
+            cover.style.display = 'none'; // 표지 화면 숨김
+            game.style.display = 'block'; // 게임 화면 보이기
+            gameLoop(); // 게임 루프 시작
+            createFlyingStars(); // 별 애니메이션 시작
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'Space' && !isJumping) {
+                jump();
+            }
+        });
+
+        function jump() {
+            isJumping = true;
+            let jumpHeight = 0;
+            let gravity = 5;
+            let jumpSpeed = 30;
+            let peak = 100;
+            let velocity = jumpSpeed;
+
+            // 점프 중 커비 이미지 변경
+            kirby.style.backgroundImage = "url('https://www.nintendo.co.kr/character/kirby/assets/img/home/kirby-powerful.png')"; // 점프 이미지
+
+            function jumpAnimation() {
+                if (jumpHeight < peak && velocity > 0) {
+                    jumpHeight += velocity;
+                    velocity -= gravity;
+                } else if (jumpHeight > 0) {
+                    jumpHeight -= gravity;
+                } else {
+                    isJumping = false;
+                    jumpHeight = 0;
+                    // 점프 종료 후 커비 이미지 복원
+                    kirby.style.backgroundImage = "url('https://i.namu.wiki/i/wXGU6DZbHowc6IB0GYPJpcmdDkLO3TW3MHzjg63jcTJvIzaBKhYqR0l9toBMHTv2OSU4eFKfPOlfrSQpymDJlA.webp')"; // 원래 이미지
+                    return;
+                }
+
+                kirby.style.bottom = jumpHeight + 'px';
+                playerNameDisplay.style.bottom = (40 + jumpHeight) + 'px'; // 커비와 함께 플레이어 이름이 올라감
+                requestAnimationFrame(jumpAnimation);
+            }
+
+            requestAnimationFrame(jumpAnimation);
+        }
+
+        function generateStar() {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = '600px';
+            game.appendChild(star);
+            stars.push(star);
+
+            function moveStar() {
+                let starPosition = parseInt(star.style.left);
+                if (starPosition < -20) {
+                    game.removeChild(star);
+                    stars = stars.filter(s => s !== star);
+                    score++;
+                    scoreDisplay.textContent = '점수: ' + score;
+                } else {
+                    star.style.left = starPosition - 5 + 'px';
+                    if (starPosition < 40 && starPosition > 20 && parseInt(kirby.style.bottom) < 40) {
+                        alert('게임 오버! 최종 점수: ' + score);
+                        document.location.reload();
+                    }
+                }
+                requestAnimationFrame(moveStar);
+            }
+            requestAnimationFrame(moveStar);
+        }
+
+        function createStars() {
+            generateStar();
+            if (score % 10 === 0 && starIntervalTime > 500) {
+                starIntervalTime -= 100;
+            }
+        }
+
+        // 별 애니메이션 추가 (2개)
+        function createFlyingStars() {
+            setInterval(function() {
+                const star1 = document.createElement('div');
+                star1.classList.add('flying-star');
+                star1.style.top = `${Math.random() * 100 + 50}px`;
+                star1.style.left = `${Math.random() * 600}px`;
+                game.appendChild(star1);
+
+                setTimeout(() => {
+                    star1.remove();
+                }, 10000); // 10초 후 별 삭제
+
+                // 두 번째 별 생성
+                const star2 = document.createElement('div');
+                star2.classList.add('flying-star');
+                star2.style.top = `${Math.random() * 100 + 50}px`;
+                star2.style.left = `${Math.random() * 600}px`;
+                game.appendChild(star2);
+
+                setTimeout(() => {
+                    star2.remove();
+                }, 10000); // 10초 후 별 삭제
+            }, 2000); // 2초마다 새로운 별 생성
+        }
+
+        function gameLoop() {
+            createStars();
+            setTimeout(gameLoop, starIntervalTime);
+        }
+    </script>
+</body>
+</html>
